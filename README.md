@@ -10,7 +10,4 @@ The following paths are extracted:
   + `LICENSE`
   + `source/`
 
-More paths may be added in the future.
-
-This repository is updated weekly by TravisCI:
-[![](https://travis-ci.org/modm-ext/fatfs-partial.svg?branch=main)](https://travis-ci.org/modm-ext/fatfs-partial)
+This repository is updated periodically by GitHub Actions:

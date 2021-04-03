@@ -1,6 +1,3 @@
-# Script is tested on OS X 10.12
-# YOUR MILEAGE MAY VARY
-
 import re, os, io, time
 import shutil
 import zipfile
@@ -23,6 +20,7 @@ urls = {
              "http://elm-chan.org/fsw/ff/pfpatches.html",
             r"\"(patch/ff.+_p\d+\.diff)\"")
 }
+versions = {}
 
 hdr = {'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.11 (KHTML, like Gecko) Chrome/23.0.1271.64 Safari/537.11',
        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
@@ -53,20 +51,34 @@ def get_regex(url, regex):
 for key, (umain, rzip, upatch, rpatch) in urls.items():
     # Download main zip file
     zipf = os.path.join(os.path.dirname(umain), get_regex(umain, rzip)[0])
+    versions[key] = os.path.basename(zipf).replace("pff", "").replace("ff", "").replace(".zip", "")
     z = zipfile.ZipFile(io.BytesIO(get_file(zipf)))
     shutil.rmtree(key, ignore_errors=True)
+    # Extract, normalize newlines and remove trailing whitespace
     for n in z.namelist():
         if any(n.startswith(s) for s in source_paths):
-            z.extract(n, key)
-            subprocess.run("dos2unix {}".format(n), cwd=key, shell=True)
+            outpath = Path(key, n)
+            print(str(outpath))
+            outpath.parent.mkdir(parents=True, exist_ok=True)
+            with z.open(n, "r") as rfile, outpath.open("w") as wfile:
+                wfile.writelines(l.rstrip().decode("utf-8")+"\n" for l in rfile.readlines())
     # Download and apply patches
-    patches = (get_file(os.path.join(os.path.dirname(upatch), p)).decode("utf-8")
-               for p in get_regex(upatch, rpatch))
-    patches = (re.sub(r"([-+]{3} .*?)\d+_p\d+(\..*)", r"\1\2", p) for p in patches)
+    patches = get_regex(upatch, rpatch)
+    if patches:
+        versions[key] = patches[-1].replace("patch/ff", "").replace(".diff", "")
+    print(versions[key])
+    patches = (get_file(os.path.join(os.path.dirname(upatch), p)).decode("utf-8") for p in patches)
+    # Reformat the patch *file name*: ff14a_p2.c -> ff.c
+    patches = (re.sub(r"([-+]{3} [\w]+?)\d+?.*?_p\d+(\.[ch])", r"\1\2", p) for p in patches)
     for patch in patches:
-        print(patch)
+        print(key, patch)
         subprocess.run("patch -l", input=patch, encoding='ascii',
                        cwd="{}/source".format(key), shell=True)
 
-print("Normalizing FatFs newlines and whitespace...")
-subprocess.run("sh ./post_script.sh > /dev/null 2>&1", shell=True)
+subprocess.run("git add tiny", shell=True)
+if subprocess.call("git diff-index --quiet HEAD --", shell=True):
+    subprocess.run('git commit -m "Update Petit FatFs to v{}"'.format(versions["tiny"]), shell=True)
+
+subprocess.run("git add full", shell=True)
+if subprocess.call("git diff-index --quiet HEAD --", shell=True):
+    subprocess.run('git commit -m "Update FatFs to v{}"'.format(versions["full"]), shell=True)
