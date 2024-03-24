@@ -21,3 +21,15 @@ jobs:
       - name: Git push
         run: |
           git push origin main
+
+      - name: Keep Alive Branch
+        if: always()
+        run: |
+          git push origin --delete keep-alive || true
+          git checkout -b keep-alive
+      - name: Keep Alive
+        if: always()
+        uses: gautamkrishnar/keepalive-workflow@v1
+        with:
+          committer_username: modm update bot
+          committer_email: bot@modm.io
