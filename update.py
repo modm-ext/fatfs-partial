@@ -69,7 +69,7 @@ for key, (umain, rzip, upatch, rpatch) in urls.items():
     print(versions[key])
     patches = (get_file(os.path.join(os.path.dirname(upatch), p)).decode("utf-8") for p in patches)
     # Reformat the patch *file name*: ff14a_p2.c -> ff.c
-    patches = (re.sub(r"([-+]{3} [\w]+?)\d+?.*?_p\d+(\.[ch])", r"\1\2", p) for p in patches)
+    patches = (re.sub(r"([-+]{3} [\w]+?)\d+?.*?(\.[ch])", r"\1\2", p) for p in patches)
     for patch in patches:
         print(key, patch)
         subprocess.run("patch -l", input=patch, encoding='ascii',
