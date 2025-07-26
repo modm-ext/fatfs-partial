@@ -11,13 +11,13 @@ source_paths = [
 ]
 
 urls = {
-    "full": ("http://elm-chan.org/fsw/ff/00index_e.html",
+    "full": ("https://elm-chan.org/fsw/ff/",
             r"arc/ff.+?\.zip",
-             "http://elm-chan.org/fsw/ff/patches.html",
+             "https://elm-chan.org/fsw/ff/patches.html",
             r"\"(patch/ff.+_p\d+\.diff)\""),
-    "tiny": ("http://elm-chan.org/fsw/ff/00index_p.html",
+    "tiny": ("https://elm-chan.org/fsw/ff/00index_p.html",
             r"arc/pff.+?\.zip",
-             "http://elm-chan.org/fsw/ff/pfpatches.html",
+             "https://elm-chan.org/fsw/ff/pfpatches.html",
             r"\"(patch/ff.+_p\d+\.diff)\"")
 }
 versions = {}
@@ -32,6 +32,7 @@ hdr = {'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.11 (KHTML,
 def get_file(url):
     attempts = 60
     file = None
+    print(f"Downloading '{url}'")
     while attempts > 0:
         try:
             file = urllib.request.urlopen(urllib.request.Request(url, headers=hdr)).read()
@@ -46,7 +47,8 @@ def get_file(url):
     return file
 
 def get_regex(url, regex):
-    return re.findall(regex, get_file(url).decode("utf-8"))
+    file = get_file(url).decode("utf-8")
+    return re.findall(regex, file)
 
 for key, (umain, rzip, upatch, rpatch) in urls.items():
     # Download main zip file

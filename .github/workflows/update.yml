@@ -7,7 +7,7 @@ on:
 
 jobs:
   update:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -16,16 +16,11 @@ jobs:
           git config --global user.email "bot@modm.io"
           git config --global user.name "modm update bot"
       - name: Run update.py script
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
         run: |
+          gh api --silent -X PUT repos/${GITHUB_REPOSITORY}/actions/workflows/update.yml/enable
           python3 update.py
       - name: Git push
         run: |
           git push origin main
-
-  keep-alive:
-    runs-on: ubuntu-22.04
-    permissions:
-      actions: write
-    steps:
-      - uses: actions/checkout@v4
-      - uses: gautamkrishnar/keepalive-workflow@v2
